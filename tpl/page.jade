@@ -4,13 +4,10 @@ html
         title= "Real time web chat"
         script(src='/chat.js')
         script(src='/socket.io/socket.io.js')
+        script(src='http://momentjs.com/downloads/moment-with-locales.js')
         link(rel='stylesheet', href='/stylesheets/chat.css')
     body
         #header
-            #user
-                label Username
-                input#usernameField
-                input#usernameSend(type='button', value='Save')
         #content
             h2 GAME
         #chat

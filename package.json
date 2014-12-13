@@ -11,6 +11,7 @@
   "dependencies": {
     "express": "^4.10.6",
     "jade": "^1.8.1",
+    "redis": "^0.12.1",
     "socket.io": "^1.2.1"
   },
   "engines": {

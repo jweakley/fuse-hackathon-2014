@@ -19,7 +19,12 @@ var io = require('socket.io').listen(app.listen(port));
 console.log("Listening on port " + port);
 
 io.sockets.on('connection', function (socket) {
-  socket.emit('message', { message: 'Welcome to the chat' });
+  socket.emit('message',
+    {
+      username: 'Server',
+      message: 'Welcome to the chat'
+    }
+  );
   socket.on('send', function (data) {
     //console.log(data.message);
     io.sockets.emit('message', data);

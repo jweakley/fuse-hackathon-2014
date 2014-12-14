@@ -1,10 +1,11 @@
 var express = require("express");
 var _ = require('lodash');
 var app = express();
-var votes = 0;
 var players = [];
 var totalPlayers = 0;
 var allGames = [];
+var votes = [];
+//var overallGamesWon = [];
 
 require('fs').readdirSync('./lib/games/').forEach(function(file) {
   var fileData = require('./lib/games/' + file);
@@ -47,6 +48,8 @@ var io = require('socket.io').listen(app.listen(port));
 console.log("Listening on port " + port);
 
 var startNewRandomGame = function() {
+  votes = [];
+  sendVoteCounts();
   var game = allGames[Math.floor(Math.random() * allGames.length - 1)+ 1];
   io.sockets.emit('incomingGame', {
       messageData: {
@@ -74,6 +77,13 @@ var updatePlayers = function() {
     currentGame.dataClass.updatePlayers(players);
   }
 };
+
+var sendVoteCounts = function() {
+  io.sockets.emit('newVoteCount', {
+    voteCount: votes.length,
+    threshold: Math.floor(players.length/2) + 1
+  });
+}
 
 var endGame = function(winner) {
   io.sockets.emit('endGame', {
@@ -107,6 +117,7 @@ io.sockets.on('connection', function (socket) {
         },
         game: currentGame.name
     });
+    sendVoteCounts();
     updatePlayers();
     sendGameData();
   });
@@ -121,6 +132,7 @@ io.sockets.on('connection', function (socket) {
     if(playerIndex >= 0) {
       players.splice(playerIndex, 1);
     }
+    sendVoteCounts();
     updatePlayers();
     console.log('Disconnect ' + socket.nickname);
     io.sockets.emit('newServerMessage',{
@@ -136,20 +148,35 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on('newGameVote', function(data) {
-    votes += 1;
-    socket.emit('newServerMessage',{
-      message: 'Vote request received.',
-      nickname: 'Server',
-      when: new Date()
+    var alreadyVoted = false;
+    _(votes).forEach(function(vote) {
+      if(vote.nickname === socket.nickname) {
+        alreadyVoted = true;
+        return false;
+      }
     });
-    if(votes > players.length/2) { // VOTE THRESHHOLD
-      votes = 0;
+    if(!alreadyVoted) {
+      votes.push({ nickname: socket.nickname });
+      socket.emit('newServerMessage',{
+        message: 'Vote request received.',
+        nickname: 'Server',
+        when: new Date()
+      });
+      sendVoteCounts();
+    } else {
+      socket.emit('newServerMessage',{
+        message: 'You have already voted.',
+        nickname: 'Server',
+        when: new Date()
+      });
+    }
+    if(votes.length > players.length/2) { // VOTE THRESHHOLD
       startNewRandomGame();
     }
   });
 
   socket.on('gameMove', function(data) {
-    console.log(socket.nickname + ' moved the game forward');
+    //console.log(socket.nickname + ' moved the game forward');
     data.nickname = socket.nickname;
     if(currentGame.name === 'Nothing') { // TODO
     } else {

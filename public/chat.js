@@ -3,6 +3,7 @@ window.onload = function() {
   var nickname;
   var chatMessages = [];
   var socket = io.connect(document.URL);
+  var maxNumberOfMessages = 50;
 
   nickname = prompt('Please enter your nickname');
   // Send message to server that user has joined
@@ -22,6 +23,9 @@ window.onload = function() {
   };
 
   var renderChat = function() {
+    if(chatMessages.length > maxNumberOfMessages) {
+      chatMessages.splice(0, chatMessages.length - maxNumberOfMessages);
+    }
     var html = '';
     for(var i=0; i<chatMessages.length; i++) {
       if(chatMessages[i].isServer) {
@@ -35,7 +39,7 @@ window.onload = function() {
       }
     }
     $('#chatText').html(html);
-    $('#chatText').animate({scrollTop: $('#chatText').height});
+    $('#chatText').animate({scrollTop: $('#chatText').prop('scrollHeight')});
   }
 
   var createClassBody = function(messageData) {

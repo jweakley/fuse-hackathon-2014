@@ -90,8 +90,7 @@ var updateGameKing = function(nickname) {
       player.gamesWon += 1;
     }
   });
-  var sortedGameKing = _(players).sortBy(function(player) { return -1 * player.gamesWon; });
-  io.sockets.emit('newGameKing', sortedGameKing);
+  io.sockets.emit('newGameKing', players);
 }
 
 var endGame = function(winner) {

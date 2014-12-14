@@ -34,7 +34,7 @@ window.onload = function() {
   };
 
   var newGameKing = function(data) {
-    var king = data[0];
+    var king = _(data).sortBy(function(player) { return -1 * player.gamesWon; }).first();
     if(king) {
       $('#currentGameKing').html(
         $('<span>').html(king.nickname + ' is the current game king with ' + king.gamesWon + ' wins!')

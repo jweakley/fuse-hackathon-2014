@@ -4,6 +4,9 @@ window.onload = function() {
   var chatMessages = [];
   var socket = io.connect(document.URL);
   var maxNumberOfMessages = 50;
+  var allGames = [{
+    name: 'Clicky'
+  }];
 
   nickname = prompt('Please enter your nickname');
   // Send message to server that user has joined
@@ -63,11 +66,30 @@ window.onload = function() {
     socket.emit('newGameVote', {});
   };
 
+  var startNewGame = function(game) {
+    console.log(game.name);
+    $('#currentGameName').html(game.name);
+  };
+
+  var updateGame = function(data) {
+    var blocks = data.blocks;
+    var scores = data.scores;
+    var blocksLeft = data.blocksLeft;
+    var context = $('#gameBoard')[0].getContext('2d');
+    context.clearRect ( 0 , 0 , $('#gameBoard').width(), $('#gameBoard').height() );
+    _(blocks).forEach(function(block) {
+      context.fillStyle = block.color;
+      context.fillRect(block.x, block.y, block.width, block.height);
+    });
+  };
+
   socket.on('newChatMessage', function (data) { newChatMessage(data) });
   socket.on('newServerMessage', function (data) { newServerMessage(data) });
   socket.on('incommingGame', function(data) {
     newServerMessage(data.messageData);
+    startNewGame(data.game);
   });
+  socket.on('gameData', function(data) { updateGame(data) });
 
   $('#chatForm').submit(function(ev) {
     ev.preventDefault();
@@ -77,5 +99,16 @@ window.onload = function() {
   $('#voteForm').submit(function(ev) {
     ev.preventDefault();
     voteForNewGame();
+  });
+
+  $('#gameBoard').click(function(event) {
+    var x = Math.round(event.pageX - $('#gameBoard').offset().left),
+        y = Math.round(event.pageY - $('#gameBoard').offset().top);
+    console.log('x: ' + x);
+    console.log('y: ' + y);
+    socket.emit('gameMove', {
+      x: x,
+      y: y
+    });
   });
 }

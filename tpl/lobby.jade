@@ -2,16 +2,19 @@ doctype
 html
     head
         title= "Real time web chat"
-        script(src='/chat.js')
+        script(src='/client.js')
+        script(src='//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js')
         script(src='/socket.io/socket.io.js')
         script(src='http://momentjs.com/downloads/moment-with-locales.js')
         script(src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js")
         link(rel='stylesheet', href='/stylesheets/chat.css')
     body
         #header
+          #currentGameHeader Current Game:
+          #currentGameName
           form#voteForm
             input(type='submit', value='Vote for a New Game')
-        #content
+        canvas#gameBoard(height='300' width='600')
         form#chatForm
           #chatText
           #chatControls

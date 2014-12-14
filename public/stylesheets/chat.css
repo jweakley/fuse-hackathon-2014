@@ -12,7 +12,15 @@ body {
   padding:10px;
   background:#5ee;
 }
-#content {
+#currentGameHeader {
+  float:left;
+}
+#currentGameName {
+  float:left;
+}
+canvas#gameBoard {
+  border:1px solid black;
+  margin:0.25em;
   padding:10px;
   padding-bottom:80px;   /* Height of the footer element */
 }

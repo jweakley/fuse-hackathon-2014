@@ -40,12 +40,12 @@ window.onload = function() {
     }
     $('#chatText').html(html);
     $('#chatText').animate({scrollTop: $('#chatText').prop('scrollHeight')});
-  }
+  };
 
   var createClassBody = function(messageData) {
     var string = moment(messageData.when).format('MMMM Do YYYY, h:mm:ss a') + ' | ' + messageData.nickname + ': ' + messageData.message;
     return string.charAt(0).toUpperCase() + string.slice(1);
-  }
+  };
 
   var sendChatMessage = function() {
     var text = $('#chatControls input.message').val();
@@ -57,13 +57,25 @@ window.onload = function() {
         when: new Date()
       }
     );
-  }
+  };
+
+  var voteForNewGame = function() {
+    socket.emit('newGameVote', {});
+  };
 
   socket.on('newChatMessage', function (data) { newChatMessage(data) });
   socket.on('newServerMessage', function (data) { newServerMessage(data) });
+  socket.on('incommingGame', function(data) {
+    newServerMessage(data.messageData);
+  });
 
   $('#chatForm').submit(function(ev) {
     ev.preventDefault();
     sendChatMessage();
+  });
+
+  $('#voteForm').submit(function(ev) {
+    ev.preventDefault();
+    voteForNewGame();
   });
 }

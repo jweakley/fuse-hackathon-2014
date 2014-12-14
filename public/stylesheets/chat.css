@@ -28,6 +28,7 @@ body {
   height:100px;
   margin:0.25em;
   overflow-y: scroll;
+  overflow-x: hidden;
 }
 #chatText div {
   padding:0.25em;

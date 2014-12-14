@@ -29,9 +29,13 @@ window.onload = function() {
     var html = '';
     for(var i=0; i<chatMessages.length; i++) {
       if(chatMessages[i].isServer) {
-        html += "<div class='server'>" + createClassBody(chatMessages[i]) + '</div><br />';
+        html += "<div class='server'>" + createClassBody(chatMessages[i]) + '</div>';
       } else {
-        html += "<div class='user'>" + createClassBody(chatMessages[i]) + '</div><br />';
+        if(chatMessages[i].nickname === nickname) {
+          html += "<div class='self'>" + createClassBody(chatMessages[i]) + '</div>';
+        } else {
+          html += "<div class='user'>" + createClassBody(chatMessages[i]) + '</div>';
+        }
       }
     }
     chatTextWindow.innerHTML = html;
@@ -39,7 +43,8 @@ window.onload = function() {
   }
 
   var createClassBody = function(messageData) {
-    return moment(messageData.when).startOf('minute').fromNow() + ' | ' + messageData.nickname + ': ' + messageData.message;
+    var string = moment(messageData.when).format('MMMM Do YYYY, h:mm:ss a') + ' | ' + messageData.nickname + ': ' + messageData.message;
+    return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
   socket.on('newChatMessage', function (data) { newChatMessage(data) });

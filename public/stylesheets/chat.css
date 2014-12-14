@@ -25,15 +25,30 @@ body {
   background:#ee5;
 }
 #chatText {
-  height:80px;
-  padding:10px;
+  height:100px;
+  margin:0.25em;
   overflow-y: scroll;
+}
+#chatText div {
+  padding:0.25em;
+  margin:0.25em;
+  border: 1px solid black;
+}
+#chatText .server {
+  background:#F00;
+}
+#chatText .self {
+  background:#0F0;
 }
 #chatControls {
   width:100%;
   height:30px;
-  padding:10px;
+  padding:0.25em;
   bottom:0;
   left:0;
   position:absolute;
+}
+#chatControls input {
+  vertical-align: middle;
+  display: inline-block;
 }

@@ -33,7 +33,7 @@ io.sockets.on('connection', function (socket) {
     socket.nickname = nickname;
     io.sockets.emit('newServerMessage',{
       message: nickname + ' has joined.',
-      nickname: 'server',
+      nickname: 'Server',
       when: new Date()
     });
   });
@@ -47,7 +47,6 @@ io.sockets.on('connection', function (socket) {
   });
 
   socket.on('sendChatMessage', function (data) {
-    console.log('message ' + data);
     io.sockets.emit('newChatMessage', data);
   });
 });

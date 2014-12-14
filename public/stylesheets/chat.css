@@ -16,7 +16,7 @@ body {
   padding:10px;
   padding-bottom:80px;   /* Height of the footer element */
 }
-#chat {
+#chatForm {
   width:100%;
   height:150px;
   position:absolute;
@@ -40,15 +40,7 @@ body {
 #chatText .self {
   background:#0F0;
 }
-#chatControls {
-  width:100%;
-  height:30px;
-  padding:0.25em;
-  bottom:0;
-  left:0;
-  position:absolute;
-}
 #chatControls input {
+  margin:0.25em;
   vertical-align: middle;
-  display: inline-block;
 }

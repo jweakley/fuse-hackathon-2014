@@ -5,13 +5,13 @@ html
         script(src='/chat.js')
         script(src='/socket.io/socket.io.js')
         script(src='http://momentjs.com/downloads/moment-with-locales.js')
+        script(src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js")
         link(rel='stylesheet', href='/stylesheets/chat.css')
     body
         #header
         #content
             h2 GAME
-        #chat
+        form#chatForm
           #chatText
           #chatControls
-            input#field
-            input#send(type='button', value='Send')
+            input.message

@@ -3,10 +3,6 @@ window.onload = function() {
   var nickname;
   var chatMessages = [];
   var socket = io.connect(document.URL);
-  var field = document.getElementById("field");
-  var sendButton = document.getElementById("send");
-  var chatTextWindow = document.getElementById("chatText");
-  var usernameField = document.getElementById("usernameField");
 
   nickname = prompt('Please enter your nickname');
   // Send message to server that user has joined
@@ -38,8 +34,8 @@ window.onload = function() {
         }
       }
     }
-    chatTextWindow.innerHTML = html;
-    chatTextWindow.scrollTop = chatTextWindow.scrollHeight;
+    $('#chatText').html(html);
+    $('#chatText').animate({scrollTop: $('#chatText').height});
   }
 
   var createClassBody = function(messageData) {
@@ -47,11 +43,9 @@ window.onload = function() {
     return string.charAt(0).toUpperCase() + string.slice(1);
   }
 
-  socket.on('newChatMessage', function (data) { newChatMessage(data) });
-  socket.on('newServerMessage', function (data) { newServerMessage(data) });
-
-  sendButton.onclick = function() {
-    var text = field.value;
+  var sendChatMessage = function() {
+    var text = $('#chatControls input.message').val();
+    $('#chatControls input.message').val('');
     socket.emit('sendChatMessage',
       {
         message: text,
@@ -59,5 +53,13 @@ window.onload = function() {
         when: new Date()
       }
     );
-  };
+  }
+
+  socket.on('newChatMessage', function (data) { newChatMessage(data) });
+  socket.on('newServerMessage', function (data) { newServerMessage(data) });
+
+  $('#chatForm').submit(function(ev) {
+    ev.preventDefault();
+    sendChatMessage();
+  });
 }

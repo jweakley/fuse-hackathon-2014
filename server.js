@@ -5,7 +5,6 @@ var players = [];
 var totalPlayers = 0;
 var allGames = [];
 var votes = [];
-//var overallGamesWon = [];
 
 require('fs').readdirSync('./lib/games/').forEach(function(file) {
   var fileData = require('./lib/games/' + file);
@@ -85,6 +84,16 @@ var sendVoteCounts = function() {
   });
 }
 
+var updateGameKing = function(nickname) {
+  _(players).forEach(function(player) {
+    if(player.nickname === nickname) {
+      player.gamesWon += 1;
+    }
+  });
+  var sortedGameKing = _(players).sortBy(function(player) { return -1 * player.gamesWon; });
+  io.sockets.emit('newGameKing', sortedGameKing);
+}
+
 var endGame = function(winner) {
   io.sockets.emit('endGame', {
     messageData: {
@@ -93,6 +102,7 @@ var endGame = function(winner) {
       when: new Date()
     }
   });
+  updateGameKing(winner.nickname);
   currentGame = defaultGame;
 }
 
@@ -101,7 +111,8 @@ io.sockets.on('connection', function (socket) {
     console.log('Joined ' + nickname);
     players.push({
       nickname: nickname,
-      score: 0
+      score: 0,
+      gamesWon: 0
     });
     socket.nickname = nickname;
     io.sockets.emit('newServerMessage',{
@@ -118,6 +129,7 @@ io.sockets.on('connection', function (socket) {
         game: currentGame.name
     });
     sendVoteCounts();
+    updateGameKing('');
     updatePlayers();
     sendGameData();
   });

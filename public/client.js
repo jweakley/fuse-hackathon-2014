@@ -33,6 +33,19 @@ window.onload = function() {
     );
   };
 
+  var newGameKing = function(data) {
+    var king = data[0];
+    if(king) {
+      $('#currentGameKing').html(
+        $('<span>').html(king.nickname + ' is the current game king with ' + king.gamesWon + ' wins!')
+      );
+    } else {
+      $('#currentGameKing').html(
+        $('<span>').html('Currently no game king.')
+      );
+    }
+  }
+
   var renderChat = function() {
     if(chatMessages.length > maxNumberOfMessages) {
       chatMessages.splice(0, chatMessages.length - maxNumberOfMessages);
@@ -125,6 +138,7 @@ window.onload = function() {
   socket.on('newChatMessage', function (data) { newChatMessage(data) });
   socket.on('newServerMessage', function (data) { newServerMessage(data) });
   socket.on('newVoteCount', function (data) { newVoteCount(data) });
+  socket.on('newGameKing', function (data) { newGameKing(data) });
   socket.on('incomingGame', function(data) {
     newServerMessage(data.messageData);
     startNewGame(data.game);

@@ -81,11 +81,18 @@ window.onload = function() {
       context.fillStyle = block.color;
       context.fillRect(block.x, block.y, block.width, block.height);
     });
+    context.fillStyle = '#000';
+    context.font = "bold 12px sans-serif";
+    var startY = 0;
+    _(scores).forEach(function(player) {
+      startY += 20;
+      context.fillText(player.nickname + ": " + player.score, 10, startY);
+    });
   };
 
   socket.on('newChatMessage', function (data) { newChatMessage(data) });
   socket.on('newServerMessage', function (data) { newServerMessage(data) });
-  socket.on('incommingGame', function(data) {
+  socket.on('incomingGame', function(data) {
     newServerMessage(data.messageData);
     startNewGame(data.game);
   });
@@ -104,11 +111,6 @@ window.onload = function() {
   $('#gameBoard').click(function(event) {
     var x = Math.round(event.pageX - $('#gameBoard').offset().left),
         y = Math.round(event.pageY - $('#gameBoard').offset().top);
-    console.log('x: ' + x);
-    console.log('y: ' + y);
-    socket.emit('gameMove', {
-      x: x,
-      y: y
-    });
+    socket.emit('gameMove', { x: x, y: y});
   });
 }

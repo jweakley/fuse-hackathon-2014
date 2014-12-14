@@ -5,6 +5,7 @@ var votes = 0;
 var players = [];
 var totalPlayers = 0;
 var currentGame = { name: 'Nothing' };
+var gameData = {};
 var allGames = [
   {
     name: 'Clicky'
@@ -39,9 +40,9 @@ console.log("Listening on port " + port);
 
 var startNewRandomGame = function() {
   var game = allGames[Math.floor(Math.random() * allGames.length)];
-  io.sockets.emit('incommingGame', {
+  io.sockets.emit('incomingGame', {
       messageData: {
-        message: 'INCOMMING GAME!',
+        message: 'INCOMING GAME!',
         nickname: 'Server',
         when: new Date()
       },
@@ -50,6 +51,9 @@ var startNewRandomGame = function() {
   //startGame
   numberOfBlocks = 10;
   blocks.push(generateBlock());
+  _(players).forEach(function(player) {
+    player.score = 0;
+  })
   currentGame = game;
 };
 
@@ -63,7 +67,7 @@ var generateBlock = function() {
   var height = Math.floor(Math.random() * maxHeight) + minBlockSize;
   var width = Math.floor(Math.random() * maxWidth) + minBlockSize;
   return {
-    color: '#FF0000',
+    color: '#'+Math.floor(Math.random()*16777215).toString(16),
     x: Math.floor(Math.random() * (screenWidth - width)),
     y: Math.floor(Math.random() * (screenHeight - height)),
     height: height,
@@ -74,24 +78,19 @@ var blocks = [];
 var numberOfBlocks = 10;
 
 io.sockets.on('connection', function (socket) {
-  console.log('New Connection');
   socket.on('join', function(nickname) {
     console.log('Joined ' + nickname);
-    players.push({nickname: nickname});
+    players.push({
+      nickname: nickname,
+      score: 0
+    });
     socket.nickname = nickname;
     io.sockets.emit('newServerMessage',{
       message: nickname + ' has joined.',
       nickname: 'Server',
       when: new Date()
     });
-    socket.emit('incommingGame', {
-        messageData: {
-          message: 'INCOMMING GAME!',
-          nickname: 'Server',
-          when: new Date()
-        },
-        game: currentGame
-    });
+    socket.emit('gameData', gameData);
   });
   socket.on('disconnect', function() {
     var playerIndex = -1;
@@ -133,13 +132,11 @@ io.sockets.on('connection', function (socket) {
     console.log(socket.nickname + ' moved the game forward');
     var x = data.x;
     var y = data.y;
-    console.log('x: '+ x + ' y: '+y);
     var clickedblockIndex = -1;
     for(var i = 0; i < blocks.length; i++) {
       var block = blocks[i];
       if (y >= block.y && y <= block.y + block.height
             && x >= block.x && x <= block.x + block.width) {
-        console.log('CLICKED!');
         clickedblockIndex = i;
         break;
       }
@@ -147,15 +144,26 @@ io.sockets.on('connection', function (socket) {
     if(clickedblockIndex >=0) {
       numberOfBlocks -= 1;
       blocks.splice(clickedblockIndex, 1);
-      //Add point
+      _(players).forEach(function(player) {
+        if(player.nickname === socket.nickname) {
+          player.score += 1;
+        }
+      });
       blocks.push(generateBlock());
     }
     if(currentGame.name === 'Nothing') {
       console.log('No Game');
     } else {
-      var gameData = {
+      var scores = [];
+      _(players).forEach(function(player) {
+        scores.push({
+          nickname: player.nickname,
+          score: player.score
+        });
+      });
+      gameData = {
         blocks: blocks,
-        scores: [],
+        scores: scores,
         blocksLeft: numberOfBlocks
       };
       console.log(gameData);

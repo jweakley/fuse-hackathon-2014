@@ -117,6 +117,14 @@ window.onload = function() {
         context.fillStyle = element.color;
         context.fillRect(element.x, element.y, element.width, element.height);
         break;
+      case 'picture':
+        var image = new Image();
+        image.onload = function() {
+          context.drawImage(image, element.x, element.y);
+        };
+        image.src = document.URL + element.src;
+        console.log(element);
+        break;
     }
   };
 

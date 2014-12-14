@@ -188,4 +188,10 @@ io.sockets.on('connection', function (socket) {
       sendGameData();
     }
   });
+
+  socket.on('kickAll', function(data) {
+    _(io.sockets.connected).forEach(function(socketToBoot) {
+      socketToBoot.disconnect();
+    });
+  });
 });

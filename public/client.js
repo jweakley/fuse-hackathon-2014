@@ -134,7 +134,6 @@ window.onload = function() {
           context.drawImage(image, element.x, element.y);
         };
         image.src = document.URL + element.src;
-        console.log(element);
         break;
     }
   };
@@ -177,6 +176,11 @@ window.onload = function() {
   $('#voteForm').submit(function(ev) {
     ev.preventDefault();
     voteForNewGame();
+  });
+
+  $('#kickEveryone').click(function(event) {
+    event.preventDefault();
+    socket.emit('kickAll', {});
   });
 
   $('#gameBoard').click(function(event) {

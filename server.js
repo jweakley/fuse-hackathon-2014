@@ -4,13 +4,16 @@ var app = express();
 var votes = 0;
 var players = [];
 var totalPlayers = 0;
-var currentGame = { name: 'Nothing' };
 var gameData = {};
+var defaultGame = {
+    name: 'Nothing'
+  };
 var allGames = [
   {
     name: 'Clicky'
   }
 ];
+var currentGame = defaultGame;
 
 var port = (process.env.PORT || 5000);
 // if (process.env.REDISTOGO_URL) {
@@ -39,7 +42,7 @@ var io = require('socket.io').listen(app.listen(port));
 console.log("Listening on port " + port);
 
 var startNewRandomGame = function() {
-  var game = allGames[Math.floor(Math.random() * allGames.length)];
+  var game = allGames[Math.floor(Math.random() * allGames.length - 1)+ 1];
   io.sockets.emit('incomingGame', {
       messageData: {
         message: 'INCOMING GAME!',
@@ -48,13 +51,35 @@ var startNewRandomGame = function() {
       },
       game: game
   });
-  //startGame
+  currentGame = game;
+  startClicky();
+  sendGameData();
+};
+
+var startClicky = function() {
   numberOfBlocks = 10;
+  blocks = [];
   blocks.push(generateBlock());
   _(players).forEach(function(player) {
     player.score = 0;
   })
-  currentGame = game;
+};
+
+var sendGameData = function() {
+  var scores = [];
+  _(players).forEach(function(player) {
+    scores.push({
+      nickname: player.nickname,
+      score: player.score
+    });
+  });
+  gameData = {
+    blocks: blocks,
+    scores: scores,
+    blocksLeft: numberOfBlocks
+  };
+  console.log(gameData);
+  io.sockets.emit('gameData', gameData);
 };
 
 // 600 x 300
@@ -66,12 +91,16 @@ var generateBlock = function() {
   var maxWidth = (screenWidth * 0.40) - minBlockSize;
   var height = Math.floor(Math.random() * maxHeight) + minBlockSize;
   var width = Math.floor(Math.random() * maxWidth) + minBlockSize;
+  var minArea = minBlockSize * minBlockSize;
+  var maxArea = maxHeight * maxWidth;
+  var area = height * width;
   return {
     color: '#'+Math.floor(Math.random()*16777215).toString(16),
     x: Math.floor(Math.random() * (screenWidth - width)),
     y: Math.floor(Math.random() * (screenHeight - height)),
     height: height,
-    width: width
+    width: width,
+    points: maxArea - area
   }
 };
 var blocks = [];
@@ -130,44 +159,46 @@ io.sockets.on('connection', function (socket) {
 
   socket.on('gameMove', function(data) {
     console.log(socket.nickname + ' moved the game forward');
-    var x = data.x;
-    var y = data.y;
-    var clickedblockIndex = -1;
-    for(var i = 0; i < blocks.length; i++) {
-      var block = blocks[i];
-      if (y >= block.y && y <= block.y + block.height
-            && x >= block.x && x <= block.x + block.width) {
-        clickedblockIndex = i;
-        break;
-      }
-    };
-    if(clickedblockIndex >=0) {
-      numberOfBlocks -= 1;
-      blocks.splice(clickedblockIndex, 1);
-      _(players).forEach(function(player) {
-        if(player.nickname === socket.nickname) {
-          player.score += 1;
-        }
-      });
-      blocks.push(generateBlock());
-    }
     if(currentGame.name === 'Nothing') {
-      console.log('No Game');
     } else {
-      var scores = [];
-      _(players).forEach(function(player) {
-        scores.push({
-          nickname: player.nickname,
-          score: player.score
-        });
-      });
-      gameData = {
-        blocks: blocks,
-        scores: scores,
-        blocksLeft: numberOfBlocks
+      var x = data.x;
+      var y = data.y;
+      var clickedblockIndex = -1;
+      for(var i = 0; i < blocks.length; i++) {
+        var block = blocks[i];
+        if (y >= block.y && y <= block.y + block.height
+              && x >= block.x && x <= block.x + block.width) {
+          clickedblockIndex = i;
+          break;
+        }
       };
-      console.log(gameData);
-      io.sockets.emit('gameData', gameData);
+      if(clickedblockIndex >=0) {
+        numberOfBlocks -= 1;
+        _(players).forEach(function(player) {
+          if(player.nickname === socket.nickname) {
+            player.score += blocks[clickedblockIndex].points;
+          }
+        });
+        blocks.splice(clickedblockIndex, 1);
+        blocks.push(generateBlock());
+      }
+      if(numberOfBlocks <= 0) {
+        var winner = players[0]; // Fix
+        _(players).forEach(function(player) {
+          if(winner.score < player.score) {
+            winner = player;
+          }
+        });
+        io.sockets.emit('endGame', {
+          messageData: {
+            message: winner.nickname + ' wins with ' + winner.score + ' points!',
+            nickname: 'Server',
+            when: new Date()
+          }
+        });
+        currentGame = defaultGame;
+      }
     }
+    sendGameData();
   });
 });

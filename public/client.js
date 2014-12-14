@@ -8,6 +8,8 @@ window.onload = function() {
     name: 'Clicky'
   }];
 
+  var isGameRunning = false;
+
   nickname = prompt('Please enter your nickname');
   // Send message to server that user has joined
   socket.emit('join', nickname);
@@ -68,26 +70,39 @@ window.onload = function() {
 
   var startNewGame = function(game) {
     console.log(game.name);
+    isGameRunning = true;
     $('#currentGameName').html(game.name);
   };
 
+  var endCurrentGame = function(game) {
+    isGameRunning = false;
+    $('#currentGameName').html('');
+    clearBoard();
+  };
+
   var updateGame = function(data) {
-    var blocks = data.blocks;
-    var scores = data.scores;
-    var blocksLeft = data.blocksLeft;
+    if(isGameRunning) {
+      var blocks = data.blocks;
+      var scores = data.scores;
+      var blocksLeft = data.blocksLeft;
+      var context = $('#gameBoard')[0].getContext('2d');
+      clearBoard();
+      _(blocks).forEach(function(block) {
+        context.fillStyle = block.color;
+        context.fillRect(block.x, block.y, block.width, block.height);
+      });
+      context.fillStyle = '#000';
+      context.font = "bold 12px sans-serif";
+      var startY = 0;
+      _(scores).forEach(function(player) {
+        startY += 20;
+        context.fillText(player.nickname + ": " + player.score, 10, startY);
+      });
+    }
+  };
+  var clearBoard = function() {
     var context = $('#gameBoard')[0].getContext('2d');
     context.clearRect ( 0 , 0 , $('#gameBoard').width(), $('#gameBoard').height() );
-    _(blocks).forEach(function(block) {
-      context.fillStyle = block.color;
-      context.fillRect(block.x, block.y, block.width, block.height);
-    });
-    context.fillStyle = '#000';
-    context.font = "bold 12px sans-serif";
-    var startY = 0;
-    _(scores).forEach(function(player) {
-      startY += 20;
-      context.fillText(player.nickname + ": " + player.score, 10, startY);
-    });
   };
 
   socket.on('newChatMessage', function (data) { newChatMessage(data) });
@@ -95,6 +110,10 @@ window.onload = function() {
   socket.on('incomingGame', function(data) {
     newServerMessage(data.messageData);
     startNewGame(data.game);
+  });
+  socket.on('endGame', function(data) {
+    newServerMessage(data.messageData);
+    endCurrentGame();
   });
   socket.on('gameData', function(data) { updateGame(data) });
 

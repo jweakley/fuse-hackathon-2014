@@ -68,10 +68,9 @@ window.onload = function() {
     socket.emit('newGameVote', {});
   };
 
-  var startNewGame = function(game) {
-    console.log(game.name);
+  var startNewGame = function(gameName) {
     isGameRunning = true;
-    $('#currentGameName').html(game.name);
+    $('#currentGameName').html(gameName);
   };
 
   var endCurrentGame = function(game) {
@@ -82,27 +81,39 @@ window.onload = function() {
 
   var updateGame = function(data) {
     if(isGameRunning) {
-      var blocks = data.blocks;
+      var elements = data.elements;
       var scores = data.scores;
-      var blocksLeft = data.blocksLeft;
       var context = $('#gameBoard')[0].getContext('2d');
       clearBoard();
-      _(blocks).forEach(function(block) {
-        context.fillStyle = block.color;
-        context.fillRect(block.x, block.y, block.width, block.height);
+      _(elements).forEach(function(element) {
+        renderElement(element, context);
       });
-      context.fillStyle = '#000';
-      context.font = "bold 12px sans-serif";
-      var startY = 0;
-      _(scores).forEach(function(player) {
-        startY += 20;
-        context.fillText(player.nickname + ": " + player.score, 10, startY);
-      });
+      renderScores(scores);
     }
   };
+
+  var renderElement = function(element, context) {
+    switch(element.type) {
+      case 'rectangle':
+        context.fillStyle = element.color;
+        context.fillRect(element.x, element.y, element.width, element.height);
+        break;
+    }
+  };
+
+  var renderScores = function(scores) {
+    var sortedScores = _(scores).sortBy(function(player) { return -1 * player.score; });
+    _(sortedScores).forEach(function(player) {
+      $('#scoreList').append(
+        $('<li>').append(player.nickname + ' ' + player.score)
+      );
+    });
+  };
+
   var clearBoard = function() {
     var context = $('#gameBoard')[0].getContext('2d');
     context.clearRect ( 0 , 0 , $('#gameBoard').width(), $('#gameBoard').height() );
+    $('#scoreList').html('');
   };
 
   socket.on('newChatMessage', function (data) { newChatMessage(data) });

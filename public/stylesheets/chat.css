@@ -20,7 +20,11 @@ body {
 }
 canvas#gameBoard {
   border:1px solid black;
+  float:left;
   padding-bottom:80px;   /* Height of the footer element */
+}
+#scoreList {
+  float:left;
 }
 #chatForm {
   width:100%;

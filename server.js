@@ -4,15 +4,20 @@ var app = express();
 var votes = 0;
 var players = [];
 var totalPlayers = 0;
-var gameData = {};
+var allGames = [];
+
+require('fs').readdirSync('./lib/games/').forEach(function(file) {
+  var fileData = require('./lib/games/' + file);
+  var game = {
+    dataClass: new fileData()
+  };
+  game.name = game.dataClass.name;
+  allGames.push(game);
+});
 var defaultGame = {
     name: 'Nothing'
   };
-var allGames = [
-  {
-    name: 'Clicky'
-  }
-];
+
 var currentGame = defaultGame;
 
 var port = (process.env.PORT || 5000);
@@ -49,62 +54,37 @@ var startNewRandomGame = function() {
         nickname: 'Server',
         when: new Date()
       },
-      game: game
+      game: game.name
   });
   currentGame = game;
-  startClicky();
+  currentGame.dataClass.startGame({ currentPlayers: players });
   sendGameData();
 };
 
-var startClicky = function() {
-  numberOfBlocks = 10;
-  blocks = [];
-  blocks.push(generateBlock());
-  _(players).forEach(function(player) {
-    player.score = 0;
-  })
-};
-
 var sendGameData = function() {
-  var scores = [];
-  _(players).forEach(function(player) {
-    scores.push({
-      nickname: player.nickname,
-      score: player.score
-    });
-  });
-  gameData = {
-    blocks: blocks,
-    scores: scores,
-    blocksLeft: numberOfBlocks
-  };
-  console.log(gameData);
-  io.sockets.emit('gameData', gameData);
-};
-
-// 600 x 300
-var generateBlock = function() {
-  var minBlockSize= 20;
-  var screenHeight = 300;
-  var screenWidth = 600;
-  var maxHeight = (screenHeight * 0.40) - minBlockSize;
-  var maxWidth = (screenWidth * 0.40) - minBlockSize;
-  var height = Math.floor(Math.random() * maxHeight) + minBlockSize;
-  var width = Math.floor(Math.random() * maxWidth) + minBlockSize;
-  var minArea = minBlockSize * minBlockSize;
-  var maxArea = maxHeight * maxWidth;
-  var area = height * width;
-  return {
-    color: '#'+Math.floor(Math.random()*16777215).toString(16),
-    x: Math.floor(Math.random() * (screenWidth - width)),
-    y: Math.floor(Math.random() * (screenHeight - height)),
-    height: height,
-    width: width,
-    points: maxArea - area
+  if(currentGame.name === 'Nothing') { // TODO
+  } else {
+    var gameData = currentGame.dataClass.fetchGameData();
+    io.sockets.emit('gameData', gameData);
   }
 };
-var blocks = [];
-var numberOfBlocks = 10;
+var updatePlayers = function() {
+  if(currentGame.name === 'Nothing') { // TODO
+  } else {
+    currentGame.dataClass.updatePlayers(players);
+  }
+};
+
+var endGame = function(winner) {
+  io.sockets.emit('endGame', {
+    messageData: {
+      message: winner.nickname + ' wins with ' + winner.score + ' points!',
+      nickname: 'Server',
+      when: new Date()
+    }
+  });
+  currentGame = defaultGame;
+}
 
 io.sockets.on('connection', function (socket) {
   socket.on('join', function(nickname) {
@@ -119,7 +99,16 @@ io.sockets.on('connection', function (socket) {
       nickname: 'Server',
       when: new Date()
     });
-    socket.emit('gameData', gameData);
+    socket.emit('incomingGame', {
+        messageData: {
+          message: 'INCOMING GAME!',
+          nickname: 'Server',
+          when: new Date()
+        },
+        game: currentGame.name
+    });
+    updatePlayers();
+    sendGameData();
   });
   socket.on('disconnect', function() {
     var playerIndex = -1;
@@ -132,12 +121,14 @@ io.sockets.on('connection', function (socket) {
     if(playerIndex >= 0) {
       players.splice(playerIndex, 1);
     }
+    updatePlayers();
     console.log('Disconnect ' + socket.nickname);
     io.sockets.emit('newServerMessage',{
       message: socket.nickname + ' has disconnected.',
       nickname: 'Server',
       when: new Date()
     });
+    sendGameData();
   });
 
   socket.on('sendChatMessage', function (data) {
@@ -151,7 +142,7 @@ io.sockets.on('connection', function (socket) {
       nickname: 'Server',
       when: new Date()
     });
-    if(votes >= players.length/2) { // VOTE THRESHHOLD
+    if(votes > players.length/2) { // VOTE THRESHHOLD
       votes = 0;
       startNewRandomGame();
     }
@@ -159,46 +150,11 @@ io.sockets.on('connection', function (socket) {
 
   socket.on('gameMove', function(data) {
     console.log(socket.nickname + ' moved the game forward');
-    if(currentGame.name === 'Nothing') {
+    data.nickname = socket.nickname;
+    if(currentGame.name === 'Nothing') { // TODO
     } else {
-      var x = data.x;
-      var y = data.y;
-      var clickedblockIndex = -1;
-      for(var i = 0; i < blocks.length; i++) {
-        var block = blocks[i];
-        if (y >= block.y && y <= block.y + block.height
-              && x >= block.x && x <= block.x + block.width) {
-          clickedblockIndex = i;
-          break;
-        }
-      };
-      if(clickedblockIndex >=0) {
-        numberOfBlocks -= 1;
-        _(players).forEach(function(player) {
-          if(player.nickname === socket.nickname) {
-            player.score += blocks[clickedblockIndex].points;
-          }
-        });
-        blocks.splice(clickedblockIndex, 1);
-        blocks.push(generateBlock());
-      }
-      if(numberOfBlocks <= 0) {
-        var winner = players[0]; // Fix
-        _(players).forEach(function(player) {
-          if(winner.score < player.score) {
-            winner = player;
-          }
-        });
-        io.sockets.emit('endGame', {
-          messageData: {
-            message: winner.nickname + ' wins with ' + winner.score + ' points!',
-            nickname: 'Server',
-            when: new Date()
-          }
-        });
-        currentGame = defaultGame;
-      }
+      currentGame.dataClass.playerMove(data, endGame);
+      sendGameData();
     }
-    sendGameData();
   });
 });

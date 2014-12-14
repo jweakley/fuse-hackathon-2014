@@ -1,0 +1,18 @@
+doctype
+html
+    head
+        title= "Real time web chat"
+        script(src='/chat.js')
+        script(src='/socket.io/socket.io.js')
+        script(src='http://momentjs.com/downloads/moment-with-locales.js')
+        script(src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js")
+        link(rel='stylesheet', href='/stylesheets/chat.css')
+    body
+        #header
+          form#voteForm
+            input(type='submit', value='Vote for a New Game')
+        #content
+        form#chatForm
+          #chatText
+          #chatControls
+            input.message

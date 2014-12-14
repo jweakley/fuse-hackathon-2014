@@ -26,6 +26,9 @@ canvas#gameBoard {
 #scoreList {
   float:left;
 }
+#chatLobby {
+  float:right;
+}
 #chatForm {
   width:100%;
   height:150px;

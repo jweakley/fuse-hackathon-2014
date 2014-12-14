@@ -27,6 +27,17 @@ window.onload = function() {
     renderChat();
   };
 
+  var updateChatLobby = function(data) {
+    $('#chatLobby').html('');
+    _(data).forEach(function(player) {
+      $('#chatLobby').append(
+        $('<li>').append(
+          $('<button class="voteKickButton" player="'+player.nickname+'">').html('Vote Kick '+player.nickname)
+        )
+      )
+    });
+  };
+
   var newVoteCount = function(data) {
     $('#numberOfVotes').html(
       $('<span>').html(data.voteCount + '/' + data.threshold + ' votes for new game.')
@@ -145,6 +156,7 @@ window.onload = function() {
 
   socket.on('newChatMessage', function (data) { newChatMessage(data) });
   socket.on('newServerMessage', function (data) { newServerMessage(data) });
+  socket.on('chatLobby', function(data) { updateChatLobby(data) })
   socket.on('newVoteCount', function (data) { newVoteCount(data) });
   socket.on('newGameKing', function (data) { newGameKing(data) });
   socket.on('incomingGame', function(data) {
